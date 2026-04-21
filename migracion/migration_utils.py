@@ -134,39 +134,54 @@ def log_migration_error(
     row_data: Optional[Dict[str, Any]] = None,
 ) -> None:
     import json
+    import math
 
-    with engine.begin() as conn:
-        ensure_migration_errors_table(conn)
-        row_json = json.dumps(row_data, default=str) if row_data else None
-        params = {
-            "run_id": migration_run_id,
-            "tbl": table_name,
-            "rid": row_id,
-            "msg": error_msg[:8000],
-        }
-        if row_json is None:
-            conn.execute(
-                text(
-                    """
-                    INSERT INTO public.migration_errors
-                    (migration_run_id, table_name, row_id, error_message, row_data)
-                    VALUES (:run_id, :tbl, :rid, :msg, NULL)
-                    """
-                ),
-                params,
-            )
-        else:
-            params["data"] = row_json
-            conn.execute(
-                text(
-                    """
-                    INSERT INTO public.migration_errors
-                    (migration_run_id, table_name, row_id, error_message, row_data)
-                    VALUES (:run_id, :tbl, :rid, :msg, CAST(:data AS jsonb))
-                    """
-                ),
-                params,
-            )
+    def safe_json_serializer(obj):
+        """Handle NaN and other problematic values for PostgreSQL JSON."""
+        if isinstance(obj, float) and math.isnan(obj):
+            return None
+        if isinstance(obj, (bytes, bytearray)):
+            return obj.hex()
+        return str(obj)
+
+    conn = engine.connect()
+    try:
+        with conn.begin():
+            ensure_migration_errors_table(conn)
+            row_json = json.dumps(row_data, default=safe_json_serializer) if row_data else None
+            params = {
+                "run_id": migration_run_id,
+                "tbl": table_name,
+                "rid": row_id,
+                "msg": error_msg[:8000],
+            }
+            if row_json is None:
+                conn.execute(
+                    text(
+                        """
+                        INSERT INTO public.migration_errors
+                        (migration_run_id, table_name, row_id, error_message, row_data)
+                        VALUES (:run_id, :tbl, :rid, :msg, NULL)
+                        """
+                    ),
+                    params,
+                )
+            else:
+                params["data"] = row_json
+                conn.execute(
+                    text(
+                        """
+                        INSERT INTO public.migration_errors
+                        (migration_run_id, table_name, row_id, error_message, row_data)
+                        VALUES (:run_id, :tbl, :rid, :msg, CAST(:data AS jsonb))
+                        """
+                    ),
+                    params,
+                )
+    except Exception as e:
+        logger.error("Failed to log migration error: %s", e)
+    finally:
+        conn.close()
 
 
 def quote_pg_ident(name: str) -> str:

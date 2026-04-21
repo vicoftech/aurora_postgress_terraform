@@ -91,15 +91,19 @@ def _insert_one_row(
     insert_sql = build_insert_sql(table_name, cols)
 
     def _run() -> int:
-        with pg_engine.begin() as conn:
+        conn = pg_engine.connect()
+        try:
             if config.disable_fk_checks_during_load:
                 conn.execute(text("SET session_replication_role = 'replica'"))
-            try:
+            
+            with conn.begin():  # Start nested transaction
                 res = conn.execute(text(insert_sql), transformed)
                 return int(res.rowcount or 0)
-            finally:
-                if config.disable_fk_checks_during_load:
-                    conn.execute(text("SET session_replication_role = 'origin'"))
+                
+        finally:
+            if config.disable_fk_checks_during_load:
+                conn.execute(text("SET session_replication_role = 'origin'"))
+            conn.close()
 
     wrapped = execute_with_retry(
         _run,
