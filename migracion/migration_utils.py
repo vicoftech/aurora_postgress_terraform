@@ -53,6 +53,17 @@ def transform_mysql_value_to_postgres(
     if value is None:
         return None
 
+    # Handle NaT (Not a Time) values from pandas
+    try:
+        # Check if it's a pandas NaT or similar invalid datetime
+        if hasattr(value, 'isna') and value.isna():
+            return None
+        # Check for string representation of NaT
+        if isinstance(value, str) and value == 'NaT':
+            return None
+    except (AttributeError, TypeError):
+        pass  # Not a datetime-like object, continue processing
+
     # BIT(1) / tinyint / bytes usados como flags booleanos
     if column_name in (
         "activo",
