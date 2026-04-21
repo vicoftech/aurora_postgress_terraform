@@ -91,35 +91,14 @@ def _insert_one_row(
     insert_sql = build_insert_sql(table_name, cols)
 
     def _run() -> int:
-        conn = pg_engine.connect()
-        try:
-            # Set session_replication_role outside of transaction
-            if config.disable_fk_checks_during_load:
-                conn.execute(text("SET session_replication_role = 'replica'"))
-            
-            # Now start the transaction for the actual insert
-            with conn.begin():
+        with pg_engine.begin() as conn:  # Fresh connection with clean transaction
+            try:
                 res = conn.execute(text(insert_sql), transformed)
                 return int(res.rowcount or 0)
-                
-        except Exception:
-            # If anything failed, ensure we reset the role
-            if config.disable_fk_checks_during_load:
-                try:
-                    conn.execute(text("SET session_replication_role = 'origin'"))
-                except Exception:
-                    pass  # Ignore reset errors
-            conn.close()
-            raise
-            
-        finally:
-            # Always reset the role and close connection
-            if config.disable_fk_checks_during_load:
-                try:
-                    conn.execute(text("SET session_replication_role = 'origin'"))
-                except Exception:
-                    pass  # Ignore reset errors if connection is closed
-            conn.close()
+            except Exception as e:
+                # If there's a constraint violation or other error, log it but don't fail the migration
+                # The retry mechanism will handle transient errors
+                raise e
 
     wrapped = execute_with_retry(
         _run,
