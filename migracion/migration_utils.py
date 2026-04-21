@@ -64,6 +64,18 @@ def transform_mysql_value_to_postgres(
         # Check for pandas Timestamp NaT by checking the string representation
         if str(value) == 'NaT':
             return None
+        # Check for numpy NaN
+        import math
+        if isinstance(value, float) and math.isnan(value):
+            return None
+        # Check for numpy.nan specifically
+        if hasattr(value, '__module__') and 'numpy' in str(value.__module__):
+            try:
+                import numpy as np
+                if value is np.nan or (isinstance(value, float) and math.isnan(value)):
+                    return None
+            except ImportError:
+                pass
     except (AttributeError, TypeError):
         pass  # Not a datetime-like object, continue processing
 
