@@ -61,6 +61,9 @@ def transform_mysql_value_to_postgres(
         # Check for string representation of NaT
         if isinstance(value, str) and value == 'NaT':
             return None
+        # Check for pandas Timestamp NaT by checking the string representation
+        if str(value) == 'NaT':
+            return None
     except (AttributeError, TypeError):
         pass  # Not a datetime-like object, continue processing
 
