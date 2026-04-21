@@ -1,0 +1,33 @@
+# Plantilla de deployment Prefect 3.
+# Ajusta entrypoint, work pool y parámetros según tu proyecto.
+#
+# Crear/actualizar deployment (ejemplos):
+#   cd migracion
+#   prefect deploy migration_flow.py:migrate_alert_prod --name prod --pool default-agent-pool
+#
+# O aplicar este manifiesto si usas prefect.yaml unificado en la raíz del repo.
+
+name: alert-prod-mysql-pg-migration
+description: Migración alert_prod MySQL → PostgreSQL (Prefect flow)
+tags:
+  - migration
+  - mysql
+  - postgresql
+
+# Ruta al flow (relativa al directorio de trabajo del worker)
+entrypoint: migration_flow.py:migrate_alert_prod
+
+# Parámetros por defecto: suele usarse config_from_env() en el worker;
+# si pasas config explícito, define parameters en prefect.yaml o CLI.
+parameters: {}
+
+schedules: []
+
+work_pool:
+  name: default-agent-pool
+  work_queue_name: default
+
+# Variables de entorno en el worker (documentadas en README):
+# MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE,
+# POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DATABASE,
+# MIGRATION_CHUNK_SIZE, MIGRATION_RETRY_ATTEMPTS, MIGRATION_TRUNCATE_DEST, MIGRATION_LOG_DIR
