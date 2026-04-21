@@ -71,6 +71,21 @@ def migrate_alert_prod(config: MigrationConfig) -> Dict[str, Any]:
 
     try:
         validate_connections_task(config.mysql_connection_string, config.postgres_connection_string)
+        
+        # Truncar tablas de destino antes de iniciar migración
+        logger.info("Truncando tablas de destino PostgreSQL...")
+        from truncate_destination import main as truncate_main
+        if not truncate_main():
+            logger.error("Error truncando tablas de destino")
+            return {
+                "status": "FAILED",
+                "error": "Error truncando tablas de destino",
+                "run_id": run_id,
+                "report_path": str(report_path),
+                "log_path": str(log_path),
+            }
+        logger.info("Tablas truncadas exitosamente")
+        
     except Exception as e:
         logger.error("Error validando conexiones: %s", e)
         return {
