@@ -53,8 +53,8 @@ def transform_mysql_value_to_postgres(
     if value is None:
         return None
 
-    # BIT(1) / tinyint usados como flags
-    if isinstance(value, int) and column_name in (
+    # BIT(1) / tinyint / bytes usados como flags booleanos
+    if column_name in (
         "activo",
         "eliminado",
         "enviada",
@@ -63,7 +63,15 @@ def transform_mysql_value_to_postgres(
         "completed",
         "enviado",
     ):
-        return bool(value)
+        if isinstance(value, (bytes, bytearray)):
+            # Convert bytes to boolean (b'\x01' -> True, b'\x00' -> False)
+            return bool(value[0]) if len(value) > 0 else False
+        elif isinstance(value, int):
+            return bool(value)
+        elif isinstance(value, str):
+            return value in ('1', 'true', 'True', 'TRUE')
+        else:
+            return bool(value)
 
     if isinstance(value, (bytes, bytearray)) and column_name in ("desde", "hasta"):
         return bytes(value)
