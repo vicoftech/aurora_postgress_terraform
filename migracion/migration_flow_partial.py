@@ -12,7 +12,7 @@ from typing import Any, Dict
 from prefect import flow, task
 from sqlalchemy import create_engine, text
 
-from migration_config import MigrationConfig, MigrationResult, MigrationStatus, FlowSummary, TABLE_MIGRATION_ORDER
+from migration_config import config_from_env, MigrationResult, MigrationStatus, FlowSummary, TABLE_MIGRATION_ORDER
 from migration_tasks import migrate_table, validate_referential_integrity_task, validate_connections_task
 from prefect.logging import get_run_logger
 from migration_utils import log_migration_error
