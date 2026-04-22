@@ -18,7 +18,7 @@ from prefect.logging import get_run_logger
 from migration_utils import log_migration_error
 
 
-@task
+@task(cache_policy=None)
 def truncate_partial_tables(pg_engine) -> bool:
     """Trunca solo las tablas desde disposicion_contenido hacia abajo."""
     logger = get_run_logger()
@@ -145,8 +145,7 @@ def migration_flow_partial() -> Dict[str, Any]:
                 table_name=table_name,
                 mysql_connection_string=config.mysql_connection_string,
                 postgres_connection_string=config.postgres_connection_string,
-                chunk_size=config.chunk_size,
-                retry_attempts=config.retry_attempts,
+                config=config,
                 migration_run_id=run_id,
             )
             results.append(result)
@@ -181,7 +180,7 @@ def migration_flow_partial() -> Dict[str, Any]:
     # Validar integridad referencial
     logger.info("--- Validando integridad referencial ---")
     try:
-        integrity_ok = validate_referential_integrity(config.postgres_connection_string)
+        integrity_ok = validate_referential_integrity_task(config.postgres_connection_string, partial_tables)
         if integrity_ok:
             logger.info("✅ Integridad referencial válida")
         else:
