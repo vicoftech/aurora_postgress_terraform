@@ -63,12 +63,7 @@ def migration_flow_partial() -> Dict[str, Any]:
     
     # Configuración desde variables de entorno
     try:
-        config = MigrationConfig(
-            mysql_connection_string=os.getenv("MYSQL_CONNECTION_STRING"),
-            postgres_connection_string=os.getenv("POSTGRES_CONNECTION_STRING"),
-            chunk_size=int(os.getenv("MIGRATION_CHUNK_SIZE", "10000")),
-            retry_attempts=int(os.getenv("MIGRATION_RETRY_ATTEMPTS", "3")),
-        )
+        config = config_from_env()
     except ValueError as e:
         logger.error("Error de configuración: %s", e)
         return {"status": "FAILED", "error": str(e)}
