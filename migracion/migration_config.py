@@ -76,7 +76,6 @@ class FlowSummary:
 
 
 # Orden respetando FKs (ejemplos del repo)
-# Prioridad: todas las tablas excepto disposicion y disposicion_contenido al final
 TABLE_MIGRATION_ORDER: List[Dict[str, Any]] = [
     {"name": "cuenta", "depends_on": [], "has_data": True},
     {"name": "descarga_fuente_anmat", "depends_on": [], "has_data": True},
@@ -85,6 +84,13 @@ TABLE_MIGRATION_ORDER: List[Dict[str, Any]] = [
     {"name": "busqueda_historica", "depends_on": ["cuenta"], "has_data": True},
     {"name": "email", "depends_on": ["cuenta"], "has_data": True},
     {"name": "overlay", "depends_on": ["cuenta"], "has_data": True},
+    {"name": "disposicion", "depends_on": [], "has_data": True},
+    {
+        "name": "disposicion_contenido",
+        "depends_on": ["disposicion"],
+        "has_data": True,
+        "special_fields": ["embedding_vector"],
+    },
     {
         "name": "alerta_generada",
         "depends_on": ["busqueda", "disposicion"],
@@ -94,14 +100,6 @@ TABLE_MIGRATION_ORDER: List[Dict[str, Any]] = [
         "name": "alerta_generada_historica",
         "depends_on": ["busqueda_historica", "disposicion"],
         "has_data": True,
-    },
-    # Tablas con menor prioridad - migradas al final
-    {"name": "disposicion", "depends_on": [], "has_data": True},
-    {
-        "name": "disposicion_contenido",
-        "depends_on": ["disposicion"],
-        "has_data": True,
-        "special_fields": ["embedding_vector"],
     },
 ]
 
