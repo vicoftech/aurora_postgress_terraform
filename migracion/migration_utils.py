@@ -107,7 +107,9 @@ def transform_mysql_value_to_postgres(
 
     if isinstance(value, str):
         if table_name == "disposicion_contenido" and column_name == "contenido":
-            return value
+            # Remove NUL (0x00) characters which PostgreSQL doesn't support
+            cleaned_value = value.replace('\x00', '')
+            return cleaned_value
         return value.strip() if value else None
 
     return value
@@ -176,6 +178,9 @@ def log_migration_error(
             return None
         if isinstance(obj, (bytes, bytearray)):
             return obj.hex()
+        if isinstance(obj, str):
+            # Remove NUL characters which PostgreSQL doesn't support in JSON
+            return obj.replace('\x00', '\\u0000')
         return str(obj)
 
     conn = engine.connect()

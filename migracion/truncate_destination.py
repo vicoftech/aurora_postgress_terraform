@@ -11,18 +11,11 @@ from migration_utils import quote_pg_ident
 
 
 def get_all_tables_to_truncate() -> List[str]:
-    """Lista de todas las tablas que serán truncadas antes de la migración."""
+    """Lista de tablas que serán truncadas desde disposicion_contenido hacia abajo."""
     return [
-        "cuenta",
-        "busqueda", 
-        "busqueda_historica",
-        "email",
-        "overlay",
-        "disposicion",
         "disposicion_contenido",
         "alerta_generada",
         "alerta_generada_historica",
-        "frontend_routes",
         "migration_errors"  # También limpiar errores de migraciones anteriores
     ]
 
