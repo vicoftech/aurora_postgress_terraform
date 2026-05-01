@@ -60,6 +60,12 @@ resource "aws_rds_cluster_parameter_group" "aurora" {
     apply_method = "pending-reboot"
   }
 
+  parameter {
+    name         = "maintenance_work_mem"
+    value        = tostring(var.maintenance_work_mem_kb)
+    apply_method = "pending-reboot"
+  }
+
   tags = {
     Name = "${var.cluster_identifier}-params"
   }

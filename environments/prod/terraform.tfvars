@@ -43,6 +43,7 @@ database_name   = "alert_db"
 master_username = "postgres"
 master_password = "Asap.2026!"
 max_connections = 100
+# maintenance_work_mem_kb = 262144  # 256 MB (default). Large GIN/HNSW: 524288
 
 deletion_protection = true
 skip_final_snapshot = false

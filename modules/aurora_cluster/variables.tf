@@ -70,6 +70,17 @@ variable "max_connections" {
   default     = 100
 }
 
+variable "maintenance_work_mem_kb" {
+  description = "PostgreSQL maintenance_work_mem in kilobytes (AWS/RDS). Default 262144 = 256 MB; use 524288 for 512 MB on large indexes (GIN/HNSW). Aurora applies this after pending-reboot: reboot each cluster instance (writer required for migrations; reboot readers too so all nodes match)."
+  type        = number
+  default     = 262144
+
+  validation {
+    condition     = var.maintenance_work_mem_kb >= 1024 && var.maintenance_work_mem_kb <= 2097152
+    error_message = "maintenance_work_mem_kb must be between 1024 (1 MB) and 2097152 (2 GB), per typical RDS limits."
+  }
+}
+
 variable "storage_encrypted" {
   description = "Enable storage encryption"
   type        = bool

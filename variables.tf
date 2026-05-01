@@ -233,6 +233,17 @@ variable "max_connections" {
   }
 }
 
+variable "maintenance_work_mem_kb" {
+  description = "Cluster parameter maintenance_work_mem in kilobytes (RDS console units). Default 262144 = 256 MB. After apply, reboot Aurora instances (writer at minimum) so the engine reloads the parameter group."
+  type        = number
+  default     = 262144
+
+  validation {
+    condition     = var.maintenance_work_mem_kb >= 1024 && var.maintenance_work_mem_kb <= 2097152
+    error_message = "maintenance_work_mem_kb must be between 1024 and 2097152."
+  }
+}
+
 # ============================================
 # Backup Configuration
 # ============================================

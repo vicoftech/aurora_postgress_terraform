@@ -112,15 +112,16 @@ resource "aws_vpc_security_group_ingress_rule" "postgres_from_bastion" {
 module "aurora" {
   source = "./modules/aurora_cluster"
 
-  cluster_identifier  = var.aurora_cluster_name
-  engine_version      = var.aurora_engine_version
-  database_name       = var.database_name
-  master_username     = var.master_username
-  master_password     = var.master_password
-  instance_class      = var.aurora_instance_class
-  replica_count       = var.aurora_replica_count
-  max_connections     = var.max_connections
-  deletion_protection = var.deletion_protection
+  cluster_identifier      = var.aurora_cluster_name
+  engine_version          = var.aurora_engine_version
+  database_name           = var.database_name
+  master_username         = var.master_username
+  master_password         = var.master_password
+  instance_class          = var.aurora_instance_class
+  replica_count           = var.aurora_replica_count
+  max_connections         = var.max_connections
+  maintenance_work_mem_kb = var.maintenance_work_mem_kb
+  deletion_protection     = var.deletion_protection
 
   db_subnet_group_name   = local.selected_db_subnet_group_name
   subnet_ids             = local.selected_private_subnet_ids
