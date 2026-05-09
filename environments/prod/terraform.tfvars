@@ -36,7 +36,11 @@ existing_private_subnet_ids = [
 
 aurora_cluster_name   = "postgres-aurora-prod"
 aurora_engine_version = "15.17"
-aurora_instance_class = "db.t4g.medium"
+# Before: db.t4g.medium (burstable + smaller local/ephemeral quotas for Postgres temp/pgvector spills).
+# After: db.r6g.large — Graviton memory-optimized; Aurora PG 15.17 in us-east-1 has no db.m6g.* in orderable options (only t4g.* and r6g*/r6gd* for this engine).
+# Aurora cluster volume still auto-scales; spills hit instance-local attach (FreeLocalStorage/FreeEphemeralStorage).
+# Apply: instance modify per node; brief disconnect possible during reboot.
+aurora_instance_class = "db.r6g.large"
 aurora_replica_count  = 1
 
 database_name   = "alert_db"

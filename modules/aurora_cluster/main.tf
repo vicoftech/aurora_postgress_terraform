@@ -110,6 +110,7 @@ resource "aws_rds_cluster_instance" "writer" {
   engine              = aws_rds_cluster.aurora.engine
   engine_version      = aws_rds_cluster.aurora.engine_version
   publicly_accessible = false
+  apply_immediately   = var.apply_immediately
 
   performance_insights_enabled          = var.enable_performance_insights
   performance_insights_kms_key_id       = var.enable_performance_insights ? var.kms_key_id : null
@@ -143,6 +144,7 @@ resource "aws_rds_cluster_instance" "readers" {
   engine              = aws_rds_cluster.aurora.engine
   engine_version      = aws_rds_cluster.aurora.engine_version
   publicly_accessible = false
+  apply_immediately   = var.apply_immediately
 
   performance_insights_enabled          = var.enable_performance_insights
   performance_insights_kms_key_id       = var.enable_performance_insights ? var.kms_key_id : null

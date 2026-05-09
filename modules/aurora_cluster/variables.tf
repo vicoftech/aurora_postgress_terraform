@@ -64,6 +64,12 @@ variable "replica_count" {
   }
 }
 
+variable "apply_immediately" {
+  description = "If true, instance modifications (e.g. class changes) apply as soon as AWS finishes; if false, pending until the next maintenance window."
+  type        = bool
+  default     = false
+}
+
 variable "max_connections" {
   description = "Maximum connections"
   type        = number

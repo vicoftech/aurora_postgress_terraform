@@ -33,20 +33,43 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization" {
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "free_storage" {
-  alarm_name          = "${var.cluster_identifier}-low-storage"
+resource "aws_cloudwatch_metric_alarm" "free_local_storage" {
+  for_each = toset(var.db_instance_identifiers)
+
+  alarm_name          = "${var.cluster_identifier}-free-local-low-${replace(each.value, ".", "-")}"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 2
   metric_name         = "FreeLocalStorage"
   namespace           = "AWS/RDS"
   period              = 600
   statistic           = "Average"
-  threshold           = 10737418240
-  alarm_description   = "Free local storage below 10GB on an instance"
+  threshold           = var.free_local_storage_alarm_below_bytes
+  alarm_description   = "Aurora instance ${each.value}: FreeLocalStorage below threshold (local attach for Postgres temp/logs; correlate with hybrid/pgvector spills)."
   alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
 
   dimensions = {
-    DBClusterIdentifier = var.cluster_identifier
+    DBInstanceIdentifier = each.value
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "free_ephemeral_storage" {
+  for_each = var.enable_free_ephemeral_storage_alarm ? toset(var.db_instance_identifiers) : toset([])
+
+  alarm_name          = "${var.cluster_identifier}-free-eph-low-${replace(each.value, ".", "-")}"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "FreeEphemeralStorage"
+  namespace           = "AWS/RDS"
+  period              = 600
+  statistic           = "Average"
+  threshold           = var.free_ephemeral_storage_alarm_below_bytes
+  alarm_description   = "Aurora PostgreSQL instance ${each.value}: FreeEphemeralStorage below threshold (NVMe used by engine paths alongside local storage)."
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    DBInstanceIdentifier = each.value
   }
 }
 
@@ -128,9 +151,11 @@ resource "aws_cloudwatch_dashboard" "aurora" {
         properties = {
           metrics = [
             ["AWS/RDS", "DatabaseConnections", "DBClusterIdentifier", var.cluster_identifier],
-            [".", "CPUUtilization", ".", "."],
-            [".", "FreeLocalStorage", ".", "."],
-            [".", "DatabaseLoad", ".", "."]
+            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", var.db_instance_identifiers[0]],
+            ["AWS/RDS", "VolumeBytesUsed", "DBClusterIdentifier", var.cluster_identifier],
+            ["AWS/RDS", "FreeLocalStorage", "DBInstanceIdentifier", var.db_instance_identifiers[0]],
+            ["AWS/RDS", "FreeEphemeralStorage", "DBInstanceIdentifier", var.db_instance_identifiers[0]],
+            ["AWS/RDS", "DatabaseLoad", "DBClusterIdentifier", var.cluster_identifier]
           ]
           period = 300
           stat   = "Average"

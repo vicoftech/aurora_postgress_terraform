@@ -198,6 +198,12 @@ variable "aurora_replica_count" {
   }
 }
 
+variable "aurora_apply_immediately" {
+  description = "Apply Aurora instance changes (e.g. class resize) immediately instead of deferring to the maintenance window."
+  type        = bool
+  default     = false
+}
+
 variable "database_name" {
   description = "Initial database name"
   type        = string
@@ -387,7 +393,7 @@ variable "cpu_threshold_percent" {
 }
 
 variable "storage_threshold_percent" {
-  description = "Storage utilization threshold for alarm"
+  description = "Reserved for RDS-classic style utilization alarms (not wired for Aurora PG cluster volume)."
   type        = number
   default     = 80
 
@@ -395,6 +401,34 @@ variable "storage_threshold_percent" {
     condition     = var.storage_threshold_percent > 0 && var.storage_threshold_percent <= 100
     error_message = "Must be between 0 and 100 percent."
   }
+}
+
+variable "aurora_free_local_storage_alarm_below_bytes" {
+  description = "CloudWatch alarm when AWS/RDS FreeLocalStorage falls below this (bytes) on any Aurora instance. Temporary query files (/pgsql_tmp workload) consume local instance attach; sizing is tied to DB instance class, not Lambda /tmp."
+  type        = number
+  default     = 10737418240
+
+  validation {
+    condition     = var.aurora_free_local_storage_alarm_below_bytes >= 5368709120
+    error_message = "Keep threshold at least 5 GiB to avoid noisy alarms on smaller heads."
+  }
+}
+
+variable "aurora_free_ephemeral_storage_alarm_below_bytes" {
+  description = "CloudWatch alarm when AWS/RDS FreeEphemeralStorage (Aurora PostgreSQL ephemeral NVMe) falls below this (bytes) on any Aurora instance."
+  type        = number
+  default     = 10737418240
+
+  validation {
+    condition     = var.aurora_free_ephemeral_storage_alarm_below_bytes >= 5368709120
+    error_message = "Keep threshold at least 5 GiB."
+  }
+}
+
+variable "enable_aurora_free_ephemeral_storage_alarm" {
+  description = "Create per-instance alarms on FreeEphemeralStorage (Aurora PostgreSQL). Disable if metrics are absent (alarm stays INSUFFICIENT_DATA)."
+  type        = bool
+  default     = true
 }
 
 variable "postgres_ingress_cidrs" {

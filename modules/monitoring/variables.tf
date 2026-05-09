@@ -31,6 +31,27 @@ variable "storage_threshold_percent" {
   default     = 80
 }
 
+variable "db_instance_identifiers" {
+  description = "Aurora instance identifiers for instance-scoped RDS metrics (e.g. postgres-aurora-prod-writer). FreeLocalStorage and FreeEphemeralStorage require DBInstanceIdentifier, not DBClusterIdentifier."
+  type        = list(string)
+}
+
+variable "free_local_storage_alarm_below_bytes" {
+  description = "Trigger alarm when Average FreeLocalStorage is below this (bytes)."
+  type        = number
+}
+
+variable "free_ephemeral_storage_alarm_below_bytes" {
+  description = "Trigger alarm when Average FreeEphemeralStorage is below this (bytes)."
+  type        = number
+}
+
+variable "enable_free_ephemeral_storage_alarm" {
+  description = "Whether to emit FreeEphemeralStorage alarms."
+  type        = bool
+  default     = true
+}
+
 variable "alert_email" {
   description = "Email for alerts"
   type        = string

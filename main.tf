@@ -119,6 +119,7 @@ module "aurora" {
   master_password         = var.master_password
   instance_class          = var.aurora_instance_class
   replica_count           = var.aurora_replica_count
+  apply_immediately       = var.aurora_apply_immediately
   max_connections         = var.max_connections
   maintenance_work_mem_kb = var.maintenance_work_mem_kb
   deletion_protection     = var.deletion_protection
@@ -162,6 +163,12 @@ module "monitoring" {
   cpu_threshold_percent        = var.cpu_threshold_percent
   storage_threshold_percent    = var.storage_threshold_percent
   alert_email                  = var.alarm_email
+
+  db_instance_identifiers = concat([module.aurora.writer_instance_id], module.aurora.reader_instance_ids)
+
+  free_local_storage_alarm_below_bytes     = var.aurora_free_local_storage_alarm_below_bytes
+  free_ephemeral_storage_alarm_below_bytes = var.aurora_free_ephemeral_storage_alarm_below_bytes
+  enable_free_ephemeral_storage_alarm      = var.enable_aurora_free_ephemeral_storage_alarm
 
   depends_on = [module.aurora]
 }
